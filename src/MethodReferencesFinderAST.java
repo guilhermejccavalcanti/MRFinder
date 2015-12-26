@@ -33,7 +33,7 @@ import org.eclipse.jdt.core.dom.MethodInvocation;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
-import merger.MergeResult;
+import util.MergeResult;
 
 public class MethodReferencesFinderAST {
 
@@ -47,8 +47,8 @@ public class MethodReferencesFinderAST {
 
 	public void run(MergeResult mergeResult, ArrayList<String> listOfRenamers, ArrayList<String> listOfImporterIssues, ArrayList<String> listOfDuplicaterIssues){
 		currentMergeResult = mergeResult;
-		this.lookForCompilantionProblems(listOfImporterIssues, ErrorType.IMPORT_ERROR);
-		this.lookForCompilantionProblems(listOfDuplicaterIssues, ErrorType.DUPLICATED_ERROR);
+		this.lookForCompilantionProblems(mergeResult, listOfImporterIssues, ErrorType.IMPORT_ERROR);
+		this.lookForCompilantionProblems(mergeResult, listOfDuplicaterIssues, ErrorType.DUPLICATED_ERROR);
 		this.executeOptimizedRenamings(listOfRenamers);
 	}
 
@@ -145,14 +145,14 @@ public class MethodReferencesFinderAST {
 	//Entry format "revision;member"
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void lookForCompilantionProblems(ArrayList<String> errorFiles, ErrorType errorToCheck){
-		
+
 		if(errorToCheck == ErrorType.IMPORT_ERROR){
 			System.out.println("Looking for Ambiguous Type Errors...");	
 		} else {
 			System.out.println("Looking for Duplicate Errors...");	
 		}
 
-		
+
 		try {
 			for(String entry : errorFiles){
 				String[] columns = entry.split(";");
@@ -211,6 +211,179 @@ public class MethodReferencesFinderAST {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void lookForCompilantionProblems(ArrayList<String> errorFiles){
+		try {
+			for(String entry : errorFiles){
+				String[] columns = entry.split(";");
+				String revisionFile = columns[0];
+				String classFile 	= columns[1];
+				String projectDir	= revisionFile.split("\\.")[0];
+
+				//Listing the folders, encodings and classpath of the project
+				ArrayList<String> folders = new ArrayList<String>();
+				listSourceFolders(folders, projectDir);
+				folders.add(projectDir);
+
+				String[] sources = new String[folders.size()];
+				sources = folders.toArray(sources);
+
+				String[] encodings = fillEncodings(sources.length);
+
+				//FIXME change if needed
+				String[] classPaths = null;
+
+				File javaFile = new File(classFile);
+				String contents = getFileContents(javaFile.getAbsolutePath());
+				int errors = 0;
+				if(contents != null){
+					// Create the ASTParser which will be a CompilationUnit
+					ASTParser parser = ASTParser.newParser(AST.JLS8);
+					parser.setKind(ASTParser.K_COMPILATION_UNIT);
+					parser.setSource(contents.toCharArray());
+
+					// Parsing
+					parser.setEnvironment(classPaths, sources, encodings, true);	
+					parser.setBindingsRecovery(true);
+					parser.setResolveBindings(true);
+					parser.setUnitName(javaFile.getName());
+					Map options = JavaCore.getOptions();
+					options.put(JavaCore.COMPILER_SOURCE, JavaCore.VERSION_1_8); 
+					parser.setCompilerOptions(options);
+					CompilationUnit parse = (CompilationUnit) parser.createAST(null);
+
+					//Listing compilation problems
+					IProblem[] problems = parse.getProblems();
+					if (problems != null && problems.length > 0) {
+						System.out.println("Got {} problems compiling the source file: "+ problems.length);
+						for (IProblem problem : problems) {
+							System.out.println("{}" + problem);
+						}
+					}
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+
+
+
+	//Entry format "revision;member"
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public void lookForCompilantionProblems(MergeResult mergeResult, ArrayList<String> errorFiles, ErrorType errorToCheck){
+
+		if(errorToCheck == ErrorType.IMPORT_ERROR){
+			System.out.println("Looking for Ambiguous Type Errors...");	
+		} else {
+			System.out.println("Looking for Duplicate Errors...");	
+		}
+
+
+		try {
+			for(String entry : errorFiles){
+				String[] columns = entry.split(";");
+				String revisionFile = columns[0];
+				String classFile 	= columns[1];
+				String projectDir	= revisionFile.split("\\.")[0];
+
+				//Listing the folders, encodings and classpath of the project
+				ArrayList<String> folders = new ArrayList<String>();
+				listSourceFolders(folders, projectDir);
+				folders.add(projectDir);
+
+				String[] sources = new String[folders.size()];
+				sources = folders.toArray(sources);
+
+				String[] encodings = fillEncodings(sources.length);
+
+				//FIXME change if needed
+				String[] classPaths = null;
+
+				File javaFile = new File(classFile);
+				String contents = getFileContents(javaFile.getAbsolutePath());
+				int errors = 0;
+				if(contents != null){
+					// Create the ASTParser which will be a CompilationUnit
+					ASTParser parser = ASTParser.newParser(AST.JLS8);
+					parser.setKind(ASTParser.K_COMPILATION_UNIT);
+					parser.setSource(contents.toCharArray());
+
+					// Parsing
+					parser.setEnvironment(classPaths, sources, encodings, true);	
+					parser.setBindingsRecovery(true);
+					parser.setResolveBindings(true);
+					parser.setUnitName(javaFile.getName());
+					Map options = JavaCore.getOptions();
+					options.put(JavaCore.COMPILER_SOURCE, JavaCore.VERSION_1_8); 
+					parser.setCompilerOptions(options);
+					CompilationUnit parse = (CompilationUnit) parser.createAST(null);
+
+					//Listing compilation problems
+					IProblem[] problems = parse.getProblems();
+					if (problems != null && problems.length > 0) {
+						//System.out.println("Got {} problems compiling the source file: "+ problems.length);
+						for (IProblem problem : problems) {
+							//System.out.println("{}" + problem);
+							if(errorToCheck 	 	== ErrorType.IMPORT_ERROR){
+								if((problem.toString()).toLowerCase().contains("ambiguous")){
+									errors++;
+									logCompitationProblem(entry,problem.toString(),ErrorType.IMPORT_ERROR);
+								}
+							} else if(errorToCheck 	== ErrorType.DUPLICATED_ERROR){
+								if((problem.toString()).toLowerCase().contains("duplicate")){
+									errors++;
+									logCompitationProblem(entry,problem.toString(),ErrorType.DUPLICATED_ERROR);
+								}
+							}
+						}
+					}
+
+					if(errors>0){
+						printCompilationProblemsReport(entry,errorToCheck,errors);
+					}
+				}
+			}
+
+			if(errorToCheck == ErrorType.IMPORT_ERROR){
+				System.out.println("Looking for Ambiguous Type Errors Done!");	
+			} else {
+				System.out.println("Looking for Duplicate Errors Done!");	
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void logCompitationProblem(String entry, String compilationProblemMessage, ErrorType errorToCheck) {
+		try {
+			String[] columns = entry.split(";");
+			String revision	 = columns[0];
+			String classFile = columns[1];
+			if(errorToCheck == ErrorType.IMPORT_ERROR){
+				File file = new File( "results/log_parser_import_issue.csv" );
+				FileWriter fw = new FileWriter(file, true);
+				BufferedWriter bw = new BufferedWriter( fw );
+				bw.write(revision+";"+classFile+";"+compilationProblemMessage);
+				bw.newLine();
+				bw.close();
+				fw.close();
+			} else if(errorToCheck == ErrorType.DUPLICATED_ERROR){
+				File file = new File( "results/log_parser_duplicated_issue.csv" );
+				FileWriter fw = new FileWriter(file, true);
+				BufferedWriter bw = new BufferedWriter( fw );
+				bw.write(revision+";"+classFile+";"+compilationProblemMessage);
+				bw.newLine();
+				bw.close();
+				fw.close();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	private void executeGroupedEntries(ArrayList<String> sharedRevisionEntryList) throws IOException {
@@ -339,7 +512,7 @@ public class MethodReferencesFinderAST {
 								listOfInvocations.add(mb.getKey());
 							}
 
-							//SE CONTIVER UMA REFERÊNCIA, INFORME O MÉTODO QUE REFERENCIOU.
+							//SE CONTIVER UMA REFERÃŠNCIA, INFORME O MÃ‰TODO QUE REFERENCIOU.
 							String namespace = (mb.getKey().split("\\."))[0];
 							//if(namespace.contains(className)){
 							if(simplifyMethodSignature(mb).contains(renamedMethod)){
@@ -561,13 +734,22 @@ public class MethodReferencesFinderAST {
 	private void printReferencesReportByRevision(ArrayList<String> sharedRevisionEntryList,Multimap<String, String> invokers) {
 		try {
 			//int references = getNumberOfReferencesByRevision(invokers);
+			String header = "";
 			String revision = (sharedRevisionEntryList.get(0).split(";"))[0];
-			File file = new File("results/report_references_by_revision.csv");
+			File file = new File("results/parser_references_by_revision_numbers.csv");
+			if(!file.exists()){
+				file.createNewFile();
+				header = "revision;referencesToRenamedMethods";
+			}
 			FileWriter fw = new FileWriter(file, true);
 			BufferedWriter bw = new BufferedWriter(fw);
 			//bw.write(revision+";"+references);
+			if(!header.isEmpty()){
+				bw.write(header+"\n");
+			}
 			bw.write(revision+";"+invokers.keySet().size());
-			currentMergeResult.renamingConflictsFromParser = invokers.keySet().size();
+			if(null!=currentMergeResult)
+				currentMergeResult.renamingConflictsFromParser = invokers.keySet().size();
 			bw.newLine();
 			bw.close();
 			fw.close();
@@ -578,9 +760,17 @@ public class MethodReferencesFinderAST {
 
 	private void printReferencesReportByRenamedMethodOptimized(ArrayList<String> sharedRevisionEntryList, Multimap<String, String> invokers) {
 		try {
-			File file = new File("results/report_references_by_renamed_method.csv");
+			String header = "";
+			File file = new File("results/parser_references_by_renamed_method_numbers.csv");
+			if(!file.exists()){
+				file.createNewFile();
+				header = "revision;file;methodSignature;references";
+			}
 			FileWriter fw = new FileWriter(file, true);
 			BufferedWriter bw = new BufferedWriter(fw);
+			if(!header.isEmpty()){
+				bw.write(header+"\n");
+			}
 			for(String entry : sharedRevisionEntryList){
 				int references = getNumberOfReferencesByRenamedMethodOptimized(entry, invokers);
 				bw.write(entry+";"+references);
@@ -601,9 +791,17 @@ public class MethodReferencesFinderAST {
 	private void printLogOfInvocationsOptimized(String entry, Multimap<String, String> invokers){
 		try {
 			//revision;member;renamed method;invoker
-			File file = new File("results/invocations.log");
+			String header = "";
+			File file = new File("results/log_parser_invocations.log");
+			if(!file.exists()){
+				file.createNewFile();
+				header = "revision;file;renamedMethod;invokers";
+			}
 			FileWriter fw = new FileWriter(file, true);
 			BufferedWriter bw = new BufferedWriter(fw);
+			if(!header.isEmpty()){
+				bw.write(header+"\n");
+			}
 			for(String method : invokers.get(entry)){
 				bw.write(entry+";"+method);
 				bw.newLine();
@@ -621,21 +819,37 @@ public class MethodReferencesFinderAST {
 			String revision	 = columns[0];
 			String classFile = columns[1];
 			if(errorToCheck == ErrorType.IMPORT_ERROR){
-				File file = new File( "results/report_import_issue.csv" );
+				String header = "";
+				File file = new File( "results/parser_import_issue_numbers.csv" );
+				if(!file.exists()){
+					file.createNewFile();
+					header = "revision;file;errors";
+				}
 				FileWriter fw = new FileWriter(file, true);
 				BufferedWriter bw = new BufferedWriter( fw );
+				if(!header.isEmpty()){
+					bw.write(header);
+				}
 				bw.write(revision+";"+classFile+";"+errors);
-				currentMergeResult.importIssuesFromParser = errors;
+				currentMergeResult.importIssuesFromParser += errors;
 				bw.newLine();
 				bw.close();
 				fw.close();
 			} else if(errorToCheck == ErrorType.DUPLICATED_ERROR){
 				errors = errors/2;
-				File file = new File( "results/report_duplicated_issue.csv" );
+				String header = "";
+				File file = new File( "results/parser_duplicated_issue_numbers.csv" );
+				if(!file.exists()){
+					file.createNewFile();
+					header = "revision;file;errors";
+				}
 				FileWriter fw = new FileWriter(file, true);
 				BufferedWriter bw = new BufferedWriter( fw );
+				if(!header.isEmpty()){
+					bw.write(header);
+				}
 				bw.write(revision+";"+classFile+";"+errors);
-				currentMergeResult.duplicationIssuesFromParser = errors;
+				currentMergeResult.duplicationIssuesFromParser += errors;
 				bw.newLine();
 				bw.close();
 				fw.close();
@@ -693,7 +907,8 @@ public class MethodReferencesFinderAST {
 		while ((line = bufferedReader.readLine()) != null) {
 			for(String entry : renamedMethodsList){
 				String renamedMethod = (entry.split(";")[2]).split("\\(")[0];
-				if(line.contains(renamedMethod)){
+				//if(line.contains(renamedMethod)){
+				if(line.matches("(?s).*\\b"+renamedMethod+"\\b.*")){
 					bufferedReader.close();
 					return true;
 				}
@@ -706,15 +921,17 @@ public class MethodReferencesFinderAST {
 	public static void main(String[] args) {
 		MethodReferencesFinderAST m = new MethodReferencesFinderAST();
 
-		String d = "C:/Users/Guilherme/Desktop/example_rename/rev;C:/Users/Guilherme/Desktop/example_rename/rev/Testes.java";
+		//	String d = "C:/Users/Guilherme/Desktop/example_rename/rev;C:/Users/Guilherme/Desktop/example_rename/rev/Testes.java";
+		String d = "C:\\GGTS\\workspace\\MRFinder\\src;C:\\GGTS\\workspace\\MRFinder\\src\\Test.java";
 		ArrayList<String> ar = new ArrayList<String>();
 		ar.add(d);
 
-		m.lookForCompilantionProblems(ar, ErrorType.DUPLICATED_ERROR);
+		//m.lookForCompilantionProblems(ar, ErrorType.DUPLICATED_ERROR);
+		m.lookForCompilantionProblems(ar);
 
 
 		long t0 = System.currentTimeMillis();
-		m.executeOptimizedRenamings("in.csv");
+		//m.executeOptimizedRenamings("in.csv");
 		long tf = System.currentTimeMillis();
 
 		System.out.println("analysis time: " + ((tf-t0)/60000) + " minutes");
