@@ -25,10 +25,12 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.ConstructorInvocation;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.internal.compiler.ast.ConstructorDeclaration;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -267,9 +269,6 @@ public class MethodReferencesFinderAST {
 			e.printStackTrace();
 		}
 	}
-
-
-
 
 	//Entry format "revision;member"
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -597,6 +596,7 @@ public class MethodReferencesFinderAST {
 			CompilationUnit parse = (CompilationUnit) parser.createAST(null);
 
 			HashMap<MethodDeclaration, ArrayList<MethodInvocation>> invocationsForMethods =	new HashMap<MethodDeclaration, ArrayList<MethodInvocation>>();
+			
 			ArrayList<String> listOfInvocations = new ArrayList<String>();
 
 			parse.accept(new ASTVisitor() {
@@ -607,7 +607,7 @@ public class MethodReferencesFinderAST {
 					activeMethod = node;
 					return super.visit(node);
 				}
-
+				
 				@Override
 				public boolean visit(MethodInvocation node) {
 					if (invocationsForMethods.get(activeMethod) == null) {
@@ -630,11 +630,11 @@ public class MethodReferencesFinderAST {
 									}
 								}
 							}
-							//System.out.println(mb.toString());
 						}
 					}
 					return super.visit(node);
 				}
+				
 			});
 		} 
 	}
@@ -749,7 +749,7 @@ public class MethodReferencesFinderAST {
 			}
 			bw.write(revision+";"+invokers.keySet().size());
 			if(null!=currentMergeResult)
-				currentMergeResult.renamingConflictsFromParser = invokers.keySet().size();
+				currentMergeResult.refToRenamedMethodsFromParser = invokers.keySet().size();
 			bw.newLine();
 			bw.close();
 			fw.close();
