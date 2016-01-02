@@ -823,7 +823,7 @@ public class MethodReferencesFinderAST {
 				File file = new File( "results/parser_import_issue_numbers.csv" );
 				if(!file.exists()){
 					file.createNewFile();
-					header = "revision;file;errors";
+					header = "revision;file;errors\n";
 				}
 				FileWriter fw = new FileWriter(file, true);
 				BufferedWriter bw = new BufferedWriter( fw );
@@ -841,7 +841,7 @@ public class MethodReferencesFinderAST {
 				File file = new File( "results/parser_duplicated_issue_numbers.csv" );
 				if(!file.exists()){
 					file.createNewFile();
-					header = "revision;file;errors";
+					header = "revision;file;errors\n";
 				}
 				FileWriter fw = new FileWriter(file, true);
 				BufferedWriter bw = new BufferedWriter( fw );
