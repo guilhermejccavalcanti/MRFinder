@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
-	<classpathentry kind="lib" path="C:/GGTS/workspace/MRFinder/dependencies/asm-3.1.jar"/>
-	<classpathentry kind="lib" path="C:/GGTS/workspace/MRFinder/dependencies/asm-commons-3.1.jar"/>
-	<classpathentry kind="lib" path="C:/GGTS/workspace/MRFinder/dependencies/commands-3.3.0-I20070605-0010.jar"/>
-	<classpathentry kind="lib" path="C:/GGTS/workspace/MRFinder/dependencies/commons-io-2.4.jar"/>
-	<classpathentry kind="lib" path="C:/GGTS/workspace/MRFinder/dependencies/google-collections.jar"/>
-	<classpathentry kind="lib" path="C:/GGTS/workspace/MRFinder/dependencies/org.eclipse.core.runtime-3.1.0.jar"/>
-	<classpathentry kind="lib" path="C:/GGTS/workspace/MRFinder/dependencies/org.eclipse.jdt.core-3.10.0.v20140604-1726.jar"/>
-	<classpathentry kind="lib" path="C:/GGTS/workspace/MRFinder/dependencies/org.eclipse.osgi_3.5.2.R35x_v20100126.jar"/>
-	<classpathentry kind="lib" path="C:/GGTS/workspace/MRFinder/dependencies/org.eclipse.text_3.5.0.jar"/>
-	<classpathentry kind="lib" path="C:/GGTS/workspace/MRFinder/dependencies/resources-3.3.0-v20070604.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/fstmerge"/>
+	<classpathentry kind="lib" path="/home/ines/Downloads/ggts-bundle/workspace_gjcc/MRFinder/dependencies/org.eclipse.jdt.core-3.10.0.v20140604-1726.jar"/>
+	<classpathentry kind="lib" path="/home/ines/Downloads/ggts-bundle/workspace_gjcc/MRFinder/dependencies/org.eclipse.osgi_3.5.2.R35x_v20100126.jar"/>
+	<classpathentry kind="lib" path="/home/ines/Downloads/ggts-bundle/workspace_gjcc/MRFinder/dependencies/resources-3.3.0-v20070604.jar"/>
+	<classpathentry kind="lib" path="/home/ines/Downloads/ggts-bundle/workspace_gjcc/MRFinder/dependencies/google-collections.jar"/>
+	<classpathentry kind="lib" path="/home/ines/Downloads/ggts-bundle/workspace_gjcc/MRFinder/dependencies/org.eclipse.core.runtime-3.1.0.jar"/>
+	<classpathentry kind="lib" path="/home/ines/Downloads/ggts-bundle/workspace_gjcc/MRFinder/dependencies/org.eclipse.text_3.5.0.jar"/>
+	<classpathentry kind="lib" path="/home/ines/Downloads/ggts-bundle/workspace_gjcc/MRFinder/dependencies/commons-io-2.4.jar"/>
+	<classpathentry kind="lib" path="/home/ines/Downloads/ggts-bundle/workspace_gjcc/MRFinder/dependencies/commands-3.3.0-I20070605-0010.jar"/>
+	<classpathentry kind="lib" path="/home/ines/Downloads/ggts-bundle/workspace_gjcc/MRFinder/dependencies/asm-3.1.jar"/>
+	<classpathentry kind="lib" path="/home/ines/Downloads/ggts-bundle/workspace_gjcc/MRFinder/dependencies/asm-commons-3.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
